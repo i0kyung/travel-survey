@@ -34,4 +34,5 @@ Designed & Developed by **i0kyung**
 
 © 2026 i0kyung. All rights reserved.
 
-https://i0kyung.github.io/travel-survey/
+[https://i0kyung.github.io/travel-survey/](https://i0kyung.github.io/travel-survey/travel-survey.html)
+
