@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여행 플래너 — 나만의 여행 설계</title>
+<link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #EEF7FF;
+    --bg-soft: #E3F1FF;
+    --card: #FFFFFF;
+    --sand: #EEF7FF;
+    --sand-dark: #CFE2F3;
+    --ink: #12384A;
+    --ink-soft: #3E6072;
+    --ink-muted: #7FA0B3;
+    --accent: #82A7F4;
+    --accent-dark: #5F8BE8;
+    --accent-light: #E6F0FF;
+    --accent-pale: #F4F9FF;
+    --green: #4E8FC8;
+    --green-light: #EAF5FF;
+    --blue: #2F6690;
+    --blue-light: #E6F0FF;
+    --gold: #5F8BE8;
+    --gold-light: #F4F9FF;
+    --border: #CFE2F3;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 6px 24px rgba(95, 139, 232, 0.12);
+    --shadow-hover: 0 10px 32px rgba(95, 139, 232, 0.18);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Gmarket Sans', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── NOISE TEXTURE OVERLAY ─── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ─── HERO ─── */
+  .hero {
+    position: relative;
+    padding: 80px 24px 60px;
+    text-align: center;
+    overflow: hidden;
+    background: linear-gradient(180deg, #E3F1FF 0%, #EEF7FF 58%, rgba(238,247,255,0) 100%);
+  }
+  .hero-deco {
+    position: absolute;
+    top: -60px; right: -80px;
+    width: 360px; height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(130,167,244,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-deco2 {
+    position: absolute;
+    bottom: -80px; left: -60px;
+    width: 280px; height: 280px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(95,139,232,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+    animation: fadeDown 0.6s ease both;
+  }
+  .hero h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(32px, 6vw, 56px);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--ink);
+    margin-bottom: 16px;
+    animation: fadeDown 0.7s 0.1s ease both;
+  }
+  .hero h1 span { color: var(--accent); }
+  .hero p {
+    font-size: 16px;
+    color: var(--ink-muted);
+    font-weight: 300;
+    max-width: 480px;
+    margin: 0 auto 32px;
+    line-height: 1.8;
+    animation: fadeDown 0.7s 0.2s ease both;
+  }
+  .progress-bar-wrap {
+    max-width: 400px;
+    margin: 0 auto;
+    animation: fadeDown 0.7s 0.3s ease both;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-bottom: 8px;
+  }
+  .progress-track {
+    height: 4px;
+    background: var(--sand-dark);
+    border-radius: 100px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 100px;
+    transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  /* ─── MAIN LAYOUT ─── */
+  .survey-wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+    position: relative; z-index: 1;
+  }
+
+  /* ─── STEP ─── */
+  .step {
+    display: none;
+    animation: stepIn 0.45s cubic-bezier(0.4,0,0.2,1) both;
+  }
+  .step.active { display: block; }
+
+  @keyframes stepIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── SECTION LABEL ─── */
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .section-num {
+    width: 32px; height: 32px;
+    background: var(--ink);
+    color: var(--sand);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .section-sub {
+    font-size: 14px;
+    color: var(--ink-muted);
+    margin-bottom: 24px;
+    padding-left: 42px;
+    font-weight: 300;
+  }
+
+  /* ─── INPUT FIELDS ─── */
+  .input-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+  .input-row.single { grid-template-columns: 1fr; }
+  @media (max-width: 520px) { .input-row { grid-template-columns: 1fr; } }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-muted);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .field input, .field select, .field textarea {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 300;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    appearance: none;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237FA0B3' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 36px;
+  }
+  .field textarea { resize: none; height: 90px; line-height: 1.6; }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(130,167,244,0.18);
+  }
+  .field input::placeholder, .field textarea::placeholder { color: #AFC7D8; }
+
+  /* ─── CARD GRID ─── */
+  .card-grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  .card-grid.col-2 { grid-template-columns: repeat(2, 1fr); }
+  .card-grid.col-3 { grid-template-columns: repeat(3, 1fr); }
+  .card-grid.col-4 { grid-template-columns: repeat(4, 1fr); }
+  @media (max-width: 560px) {
+    .card-grid.col-3, .card-grid.col-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 380px) {
+    .card-grid.col-2, .card-grid.col-3, .card-grid.col-4 { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  .opt-card {
+    background: var(--card);
+    border: 2px solid transparent;
+    border-radius: var(--radius);
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+    text-align: center;
+    box-shadow: var(--shadow);
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .opt-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    border-color: rgba(130,167,244,0.45);
+  }
+  .opt-card.selected {
+    border-color: var(--accent);
+    background: var(--accent-pale);
+    box-shadow: 0 0 0 4px rgba(130,167,244,0.14), var(--shadow);
+  }
+  .opt-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 10px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .opt-card .card-emoji {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  }
+  .opt-card .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .opt-card .card-sub {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 3px;
+    font-weight: 300;
+    line-height: 1.4;
+  }
+  .opt-card.selected .card-title { color: var(--accent); }
+
+  /* Budget slider */
+  .budget-slider-wrap {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    box-shadow: var(--shadow);
+    margin-bottom: 8px;
+  }
+  .budget-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .budget-opt {
+    text-align: center;
+    cursor: pointer;
+    flex: 1;
+    padding: 10px 4px;
+    border-radius: 10px;
+    transition: background 0.2s;
+    position: relative;
+  }
+  .budget-opt.active {
+    background: var(--accent-light);
+  }
+  .budget-opt .b-emoji { font-size: 22px; display: block; margin-bottom: 4px; }
+  .budget-opt .b-label { font-size: 11px; font-weight: 700; color: var(--ink-muted); }
+  .budget-opt.active .b-label { color: var(--accent); }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--sand-dark);
+    border-radius: 100px;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid #fff;
+    box-shadow: 0 2px 8px rgba(95,139,232,0.28);
+    transition: transform 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  .budget-value-display {
+    text-align: center;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--ink-muted);
+    font-weight: 300;
+  }
+  .budget-value-display strong { color: var(--accent); font-size: 15px; }
+
+  /* Tags for avoids */
+  .tag-input-wrap {
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 12px;
+    min-height: 80px;
+    cursor: text;
+    transition: border-color 0.2s;
+  }
+  .tag-input-wrap:focus-within { border-color: var(--accent); }
+  .tags-display {
+    display: flex; flex-wrap: wrap; gap: 6px;
+    margin-bottom: 8px;
+  }
+  .tag-item {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 100px;
+    display: flex; align-items: center; gap: 4px;
+    cursor: pointer;
+  }
+  .tag-item:hover { background: #D7E6FF; }
+  .tag-item span { font-size: 14px; line-height: 1; }
+  .tag-input {
+    border: none; outline: none;
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--ink);
+    background: transparent;
+    width: 100%;
+    padding: 2px 4px;
+  }
+  .tag-suggestions {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
+  }
+  .tag-suggest-item {
+    background: var(--sand-dark);
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .tag-suggest-item:hover { background: #D9EBFA; }
+
+  /* ─── NAVIGATION ─── */
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 36px;
+    gap: 12px;
+  }
+  .btn {
+    padding: 14px 32px;
+    border-radius: 100px;
+    font-family: 'Gmarket Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    outline: none;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(95,139,232,0.28);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .btn-primary:hover {
+    background: var(--accent-dark);
+    box-shadow: 0 6px 20px rgba(95,139,232,0.34);
+    transform: translateY(-1px);
+  }
+  .btn-secondary {
+    background: var(--card);
+    color: var(--ink-muted);
+    border: 1.5px solid var(--border);
+  }
+  .btn-secondary:hover {
+    background: var(--sand-dark);
+    color: var(--ink);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--ink-muted);
+    font-size: 13px;
+    padding: 10px 16px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    height: 1px;
+    background: var(--sand-dark);
+    margin: 32px 0;
+  }
+
+  /* ─── RESULT PAGE ─── */
+  #result { display: none; }
+  #result.active { display: block; animation: stepIn 0.5s ease both; }
+
+  .result-hero {
+    background: linear-gradient(135deg, #12384A 0%, #2F6690 100%);
+    color: #F4F9FF;
+    border-radius: 24px;
+    padding: 40px 36px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-hero::before {
+    content: '✈';
+    position: absolute;
+    right: 24px; top: 20px;
+    font-size: 80px;
+    opacity: 0.07;
+  }
+  .result-type-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 5px 14px;
+    border-radius: 100px;
+    margin-bottom: 16px;
+  }
+  .result-hero h2 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 8px;
+  }
+  .result-hero p {
+    font-size: 14px;
+    color: #D9EBFA;
+    font-weight: 300;
+    line-height: 1.7;
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media (max-width: 500px) { .result-grid { grid-template-columns: 1fr; } }
+
+  .result-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .result-card .rc-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ink-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .result-card .rc-value {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ink);
+    line-height: 1.5;
+  }
+  .result-card .rc-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .result-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .result-tag {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 100px;
+  }
+  .result-tag.green { background: var(--green-light); color: var(--green); }
+  .result-tag.blue { background: var(--blue-light); color: var(--blue); }
+  .result-tag.gold { background: var(--gold-light); color: var(--gold); }
+
+  .result-summary-table {
+    background: var(--card);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+  }
+  .result-summary-table table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .result-summary-table th {
+    text-align: left;
+    background: var(--sand);
+    padding: 12px 20px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-muted);
+    letter-spacing: 0.5px;
+  }
+  .result-summary-table td {
+    padding: 14px 20px;
+    font-size: 14px;
+    color: var(--ink);
+    font-weight: 300;
+    border-top: 1px solid var(--sand-dark);
+    vertical-align: top;
+  }
+  .result-summary-table tr:first-child td { border-top: none; }
+  .result-summary-table td:first-child {
+    font-weight: 700;
+    color: var(--ink-soft);
+    width: 130px;
+    font-size: 13px;
+  }
+
+  .restart-row {
+    display: flex; gap: 12px; justify-content: center;
+    margin-top: 32px; flex-wrap: wrap;
+  }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ─── STEP INDICATOR ─── */
+  .step-dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-bottom: 40px;
+  }
+  .step-dot {
+    width: 8px; height: 8px;
+    border-radius: 100px;
+    background: var(--sand-dark);
+    transition: all 0.3s;
+  }
+  .step-dot.done { background: var(--accent); opacity: 0.4; width: 16px; }
+  .step-dot.active { background: var(--accent); width: 24px; }
+
+  .multi-hint {
+    font-size: 11px;
+    color: var(--ink-muted);
+    font-weight: 300;
+    margin-top: -4px;
+    margin-bottom: 16px;
+    padding-left: 2px;
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-deco"></div>
+  <div class="hero-deco2"></div>
+  <div class="hero-badge">✈ Travel Planner</div>
+  <h1>나만의 <span>완벽한 여행</span>을<br>설계해드릴게요</h1>
+  <p>몇 가지 질문에 답하면<br>당신에게 딱 맞는 여행 플랜을 만들어 드려요</p>
+  <div class="progress-bar-wrap">
+    <div class="progress-label">
+      <span id="progressLabel">기본 정보</span>
+      <span id="progressPercent">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+</div>
+
+<!-- SURVEY WRAP -->
+<div class="survey-wrap">
+  <div class="step-dots" id="stepDots"></div>
+
+  <!-- ═══ STEP 1: 기본 정보 ═══ -->
+  <div class="step active" id="step-1">
+    <div class="section-label">
+      <div class="section-num">1</div>
+      <div class="section-title">기본 여행 정보</div>
+    </div>
+    <div class="section-sub">어디로, 언제, 얼마나 떠나실 건가요?</div>
+
+    <div class="input-row">
+      <div class="field">
+        <label>출발지</label>
+        <input type="text" id="from" placeholder="예: 서울, 부산" />
+      </div>
+      <div class="field">
+        <label>여행지</label>
+        <input type="text" id="to" placeholder="예: 제주도, 교토, 파리" />
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="field">
+        <label>여행 날짜</label>
+        <input type="date" id="travelDate" />
+      </div>
+      <div class="field">
+        <label>여행 기간</label>
+        <select id="duration">
+          <option value="">선택해주세요</option>
+          <option value="당일치기">당일치기</option>
+          <option value="1박 2일">1박 2일</option>
+          <option value="2박 3일">2박 3일</option>
+          <option value="3박 4일">3박 4일</option>
+          <option value="4~6박">4~6박</option>
+          <option value="1주 이상">1주 이상</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <div></div>
+      <button class="btn btn-primary" onclick="nextStep()">다음 <span>→</span></button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 2: 동행자 ═══ -->
+  <div class="step" id="step-2">
+    <div class="section-label">
+      <div class="section-num">2</div>
+      <div class="section-title">누구와 함께 하시나요?</div>
+    </div>
+    <div class="section-sub">동행자 유형을 선택해주세요</div>
+
+    <div class="card-grid col-3" id="companion-grid">
+      <div class="opt-card" data-group="companion" data-value="혼자">
+        <span class="card-emoji">🧍</span>
+        <div class="card-title">혼자</div>
+        <div class="card-sub">나만의 여행</div>
+      </div>
+      <div class="opt-card" data-group="companion" data-value="커플">
+        <span class="card-emoji">👫</span>
+        <div class="card-title">커플</div>
+        <div class="card-sub">연인과 함께</div>
+      </div>
+      <div class="opt-card" data-group="companion" data-value="가족">
+        <span class="card-emoji">👨‍👩‍👧</span>
+        <div class="card-title">가족</div>
+        <div class="card-sub">가족 여행</div>
+      </div>
+      <div class="opt-card" data-group="companion" data-value="친구">
+        <span class="card-emoji">👯</span>
+        <div class="card-title">친구</div>
+        <div class="card-sub">친구들과</div>
+      </div>
+      <div class="opt-card" data-group="companion" data-value="단체">
+        <span class="card-emoji">👥</span>
+        <div class="card-title">단체</div>
+        <div class="card-sub">모임·팀 여행</div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← 이전</button>
+      <button class="btn btn-primary" onclick="nextStep()">다음 →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 3: 여행 분위기 ═══ -->
+  <div class="step" id="step-3">
+    <div class="section-label">
+      <div class="section-num">3</div>
+      <div class="section-title">어떤 여행을 원하세요?</div>
+    </div>
+    <div class="section-sub">여행 분위기를 골라주세요</div>
+    <p class="multi-hint">✦ 여러 개 선택 가능</p>
+
+    <div class="card-grid col-3" id="vibe-grid">
+      <div class="opt-card" data-group="vibe" data-multi="true" data-value="자연·힐링">
+        <span class="card-emoji">🌿</span>
+        <div class="card-title">자연·힐링</div>
+        <div class="card-sub">산, 바다, 공원</div>
+      </div>
+      <div class="opt-card" data-group="vibe" data-multi="true" data-value="맛집 탐방">
+        <span class="card-emoji">🍜</span>
+        <div class="card-title">맛집 탐방</div>
+        <div class="card-sub">로컬 식당, 시장</div>
+      </div>
+      <div class="opt-card" data-group="vibe" data-multi="true" data-value="문화·역사">
+        <span class="card-emoji">🏛</span>
+        <div class="card-title">문화·역사</div>
+        <div class="card-sub">유적지, 박물관</div>
+      </div>
+      <div class="opt-card" data-group="vibe" data-multi="true" data-value="카페·감성">
+        <span class="card-emoji">☕</span>
+        <div class="card-title">카페·감성</div>
+        <div class="card-sub">카페, 사진 명소</div>
+      </div>
+      <div class="opt-card" data-group="vibe" data-multi="true" data-value="액티비티">
+        <span class="card-emoji">🏄</span>
+        <div class="card-title">액티비티</div>
+        <div class="card-sub">스포츠, 체험</div>
+      </div>
+      <div class="opt-card" data-group="vibe" data-multi="true" data-value="쇼핑">
+        <span class="card-emoji">🛍</span>
+        <div class="card-title">쇼핑</div>
+        <div class="card-sub">마켓, 부티크</div>
+      </div>
+      <div class="opt-card" data-group="vibe" data-multi="true" data-value="야경·밤문화">
+        <span class="card-emoji">🌃</span>
+        <div class="card-title">야경·밤문화</div>
+        <div class="card-sub">바, 야경 스팟</div>
+      </div>
+      <div class="opt-card" data-group="vibe" data-multi="true" data-value="휴식·느린여행">
+        <span class="card-emoji">🛋</span>
+        <div class="card-title">휴식·느린여행</div>
+        <div class="card-sub">여유로운 일정</div>
+      </div>
+      <div class="opt-card" data-group="vibe" data-multi="true" data-value="테마파크">
+        <span class="card-emoji">🎡</span>
+        <div class="card-title">테마파크</div>
+        <div class="card-sub">놀이공원, 리조트</div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← 이전</button>
+      <button class="btn btn-primary" onclick="nextStep()">다음 →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 4: 예산 ═══ -->
+  <div class="step" id="step-4">
+    <div class="section-label">
+      <div class="section-num">4</div>
+      <div class="section-title">하루 예산은 얼마나 되나요?</div>
+    </div>
+    <div class="section-sub">1인 기준 하루 지출 예산을 선택해주세요</div>
+
+    <div class="budget-slider-wrap">
+      <div class="budget-labels">
+        <div class="budget-opt active" data-budget-idx="0">
+          <span class="b-emoji">🪙</span>
+          <span class="b-label">저예산</span>
+        </div>
+        <div class="budget-opt" data-budget-idx="1">
+          <span class="b-emoji">💵</span>
+          <span class="b-label">보통</span>
+        </div>
+        <div class="budget-opt" data-budget-idx="2">
+          <span class="b-emoji">💳</span>
+          <span class="b-label">여유 있음</span>
+        </div>
+        <div class="budget-opt" data-budget-idx="3">
+          <span class="b-emoji">💎</span>
+          <span class="b-label">플렉스</span>
+        </div>
+      </div>
+      <input type="range" id="budgetSlider" min="0" max="3" step="1" value="0">
+      <div class="budget-value-display" id="budgetDisplay">
+        1인 하루 <strong>3만원 이하</strong>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← 이전</button>
+      <button class="btn btn-primary" onclick="nextStep()">다음 →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 5: 이동 방식 & 숙소 ═══ -->
+  <div class="step" id="step-5">
+    <div class="section-label">
+      <div class="section-num">5</div>
+      <div class="section-title">이동 방식과 숙소 선호</div>
+    </div>
+    <div class="section-sub">이동 수단을 고르고, 선호하는 숙소 유형을 선택해주세요</div>
+
+    <div class="field" style="margin-bottom:8px;"><label>이동 방식</label></div>
+    <p class="multi-hint">✦ 여러 개 선택 가능</p>
+    <div class="card-grid col-4" style="margin-bottom:28px" id="transport-grid">
+      <div class="opt-card" data-group="transport" data-multi="true" data-value="도보">
+        <span class="card-emoji">🚶</span>
+        <div class="card-title">도보</div>
+      </div>
+      <div class="opt-card" data-group="transport" data-multi="true" data-value="대중교통">
+        <span class="card-emoji">🚌</span>
+        <div class="card-title">대중교통</div>
+      </div>
+      <div class="opt-card" data-group="transport" data-multi="true" data-value="자차">
+        <span class="card-emoji">🚗</span>
+        <div class="card-title">자차</div>
+      </div>
+      <div class="opt-card" data-group="transport" data-multi="true" data-value="택시">
+        <span class="card-emoji">🚕</span>
+        <div class="card-title">택시</div>
+      </div>
+      <div class="opt-card" data-group="transport" data-multi="true" data-value="렌터카">
+        <span class="card-emoji">🔑</span>
+        <div class="card-title">렌터카</div>
+      </div>
+      <div class="opt-card" data-group="transport" data-multi="true" data-value="자전거">
+        <span class="card-emoji">🚲</span>
+        <div class="card-title">자전거</div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-bottom:8px;"><label>숙소 선호</label></div>
+    <div class="card-grid col-3" id="stay-grid">
+      <div class="opt-card" data-group="stay" data-value="감성 숙소">
+        <span class="card-emoji">🏡</span>
+        <div class="card-title">감성 숙소</div>
+        <div class="card-sub">독채, 풀빌라</div>
+      </div>
+      <div class="opt-card" data-group="stay" data-value="가성비">
+        <span class="card-emoji">🏨</span>
+        <div class="card-title">가성비</div>
+        <div class="card-sub">깨끗하고 저렴하게</div>
+      </div>
+      <div class="opt-card" data-group="stay" data-value="위치 중심">
+        <span class="card-emoji">📍</span>
+        <div class="card-title">위치 중심</div>
+        <div class="card-sub">중심지, 이동 편리</div>
+      </div>
+      <div class="opt-card" data-group="stay" data-value="호텔">
+        <span class="card-emoji">🏩</span>
+        <div class="card-title">호텔</div>
+        <div class="card-sub">편의시설 완비</div>
+      </div>
+      <div class="opt-card" data-group="stay" data-value="게스트하우스">
+        <span class="card-emoji">🛏</span>
+        <div class="card-title">게스트하우스</div>
+        <div class="card-sub">여행자와 교류</div>
+      </div>
+      <div class="opt-card" data-group="stay" data-value="캠핑·글램핑">
+        <span class="card-emoji">⛺</span>
+        <div class="card-title">캠핑·글램핑</div>
+        <div class="card-sub">자연 속에서</div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← 이전</button>
+      <button class="btn btn-primary" onclick="nextStep()">다음 →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 6: 음식 취향 ═══ -->
+  <div class="step" id="step-6">
+    <div class="section-label">
+      <div class="section-num">6</div>
+      <div class="section-title">음식 취향을 알려주세요</div>
+    </div>
+    <div class="section-sub">선호하는 식사 스타일을 선택해주세요</div>
+    <p class="multi-hint">✦ 여러 개 선택 가능</p>
+
+    <div class="card-grid col-3" id="food-grid">
+      <div class="opt-card" data-group="food" data-multi="true" data-value="카페·브런치">
+        <span class="card-emoji">🥐</span>
+        <div class="card-title">카페·브런치</div>
+        <div class="card-sub">감성 카페 투어</div>
+      </div>
+      <div class="opt-card" data-group="food" data-multi="true" data-value="로컬 맛집">
+        <span class="card-emoji">🍱</span>
+        <div class="card-title">로컬 맛집</div>
+        <div class="card-sub">현지인 찐맛집</div>
+      </div>
+      <div class="opt-card" data-group="food" data-multi="true" data-value="디저트">
+        <span class="card-emoji">🍰</span>
+        <div class="card-title">디저트</div>
+        <div class="card-sub">달콤한 간식 투어</div>
+      </div>
+      <div class="opt-card" data-group="food" data-multi="true" data-value="술·바">
+        <span class="card-emoji">🍺</span>
+        <div class="card-title">술·바</div>
+        <div class="card-sub">이자카야, 루프탑 바</div>
+      </div>
+      <div class="opt-card" data-group="food" data-multi="true" data-value="파인다이닝">
+        <span class="card-emoji">🍽</span>
+        <div class="card-title">파인다이닝</div>
+        <div class="card-sub">특별한 식사 경험</div>
+      </div>
+      <div class="opt-card" data-group="food" data-multi="true" data-value="채식·비건">
+        <span class="card-emoji">🥗</span>
+        <div class="card-title">채식·비건</div>
+        <div class="card-sub">건강식 위주</div>
+      </div>
+    </div>
+
+    <div class="field" style="margin-top:16px;">
+      <label>알레르기 또는 특이 사항</label>
+      <input type="text" id="allergy" placeholder="예: 해산물 알레르기, 할랄 식품만 가능" />
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← 이전</button>
+      <button class="btn btn-primary" onclick="nextStep()">다음 →</button>
+    </div>
+  </div>
+
+  <!-- ═══ STEP 7: 필수 방문 & 피하고 싶은 것 ═══ -->
+  <div class="step" id="step-7">
+    <div class="section-label">
+      <div class="section-num">7</div>
+      <div class="section-title">꼭 가고 싶은 곳 & 피하고 싶은 것</div>
+    </div>
+    <div class="section-sub">여행에서 중요한 조건을 알려주세요</div>
+
+    <div class="field" style="margin-bottom:20px;">
+      <label>꼭 가고 싶은 곳 또는 해보고 싶은 것</label>
+      <textarea id="mustVisit" placeholder="예: 오사카 도톤보리, 현지 요리 클래스 참여, 야경 보기..."></textarea>
+    </div>
+
+    <div class="field" style="margin-bottom:6px;">
+      <label>피하고 싶은 것 (태그 입력)</label>
+    </div>
+    <div class="tag-input-wrap" id="avoidWrap">
+      <div class="tags-display" id="avoidTags"></div>
+      <input type="text" class="tag-input" id="avoidInput" placeholder="입력 후 Enter 또는 제안 클릭" />
+    </div>
+    <div class="tag-suggestions" id="avoidSuggestions">
+      <span class="tag-suggest-item" onclick="addTag('긴 이동')">긴 이동</span>
+      <span class="tag-suggest-item" onclick="addTag('사람 많은 곳')">사람 많은 곳</span>
+      <span class="tag-suggest-item" onclick="addTag('등산')">등산</span>
+      <span class="tag-suggest-item" onclick="addTag('비싼 식당')">비싼 식당</span>
+      <span class="tag-suggest-item" onclick="addTag('빡빡한 일정')">빡빡한 일정</span>
+      <span class="tag-suggest-item" onclick="addTag('관광지 위주')">관광지 위주</span>
+      <span class="tag-suggest-item" onclick="addTag('단체 투어')">단체 투어</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="field" style="margin-bottom:8px;"><label>특별 조건</label></div>
+    <p class="multi-hint">✦ 여러 개 선택 가능</p>
+    <div class="card-grid col-3" id="special-grid">
+      <div class="opt-card" data-group="special" data-multi="true" data-value="아이 동반">
+        <span class="card-emoji">👶</span>
+        <div class="card-title">아이 동반</div>
+      </div>
+      <div class="opt-card" data-group="special" data-multi="true" data-value="반려동물">
+        <span class="card-emoji">🐶</span>
+        <div class="card-title">반려동물</div>
+      </div>
+      <div class="opt-card" data-group="special" data-multi="true" data-value="이동 약자">
+        <span class="card-emoji">♿</span>
+        <div class="card-title">이동 약자</div>
+      </div>
+      <div class="opt-card" data-group="special" data-multi="true" data-value="사진 명소 중심">
+        <span class="card-emoji">📸</span>
+        <div class="card-title">사진 명소 중심</div>
+      </div>
+      <div class="opt-card" data-group="special" data-multi="true" data-value="어르신 동반">
+        <span class="card-emoji">👴</span>
+        <div class="card-title">어르신 동반</div>
+      </div>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-secondary" onclick="prevStep()">← 이전</button>
+      <button class="btn btn-primary" onclick="showResult()">결과 보기 ✨</button>
+    </div>
+  </div>
+
+  <!-- ═══ RESULT ═══ -->
+  <div id="result">
+    <div class="result-hero">
+      <div class="result-type-badge" id="resultBadge">여행자 유형</div>
+      <h2 id="resultTitle">여행 플랜 요약</h2>
+      <p id="resultDesc">당신을 위한 여행 키워드</p>
+    </div>
+
+    <div class="result-grid" id="resultGrid"></div>
+
+    <div class="result-summary-table">
+      <table>
+        <thead><tr><th>항목</th><th>내용</th></tr></thead>
+        <tbody id="resultTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="restart-row">
+      <button class="btn btn-secondary" onclick="restart()">↩ 다시 작성하기</button>
+      <button class="btn btn-primary" onclick="copyResult()">📋 결과 복사하기</button>
+      <button class="btn btn-primary" onclick="shareResultLink()">🔗 결과 링크 공유하기</button>
+      <button class="btn btn-secondary" onclick="startNewTest()">🧪 나도 테스트하기</button>
+    </div>
+  </div>
+
+</div><!-- /survey-wrap -->
+
+<script>
+const TOTAL_STEPS = 7;
+let currentStep = 1;
+let avoidTags = [];
+let currentResultData = null;
+
+const budgetLabels = ['3만원 이하', '3~7만원', '7~15만원', '15만원 이상'];
+const budgetEmoji = ['🪙', '💵', '💳', '💎'];
+const stepNames = ['기본 정보', '동행자', '여행 분위기', '예산', '이동·숙소', '음식 취향', '방문지·조건'];
+
+// ── DOTS
+function buildDots() {
+  const wrap = document.getElementById('stepDots');
+  wrap.innerHTML = '';
+  for (let i = 1; i <= TOTAL_STEPS; i++) {
+    const d = document.createElement('div');
+    d.className = 'step-dot' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+    wrap.appendChild(d);
+  }
+}
+
+// ── PROGRESS
+function updateProgress() {
+  const pct = Math.round(((currentStep - 1) / TOTAL_STEPS) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPercent').textContent = pct + '%';
+  document.getElementById('progressLabel').textContent = stepNames[currentStep - 1];
+  buildDots();
+}
+
+// ── STEP NAV
+function showStep(n) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('step-' + n);
+  if (el) el.classList.add('active');
+  document.getElementById('result').classList.remove('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextStep() {
+  if (currentStep < TOTAL_STEPS) {
+    currentStep++;
+    showStep(currentStep);
+    updateProgress();
+  }
+}
+
+function prevStep() {
+  if (currentStep > 1) {
+    currentStep--;
+    showStep(currentStep);
+    updateProgress();
+  }
+}
+
+// ── CARD SELECTION
+document.querySelectorAll('.opt-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const group = card.dataset.group;
+    const isMulti = card.dataset.multi === 'true';
+    if (!isMulti) {
+      document.querySelectorAll(`.opt-card[data-group="${group}"]`).forEach(c => c.classList.remove('selected'));
+    }
+    card.classList.toggle('selected');
+  });
+});
+
+function getSelected(group) {
+  return [...document.querySelectorAll(`.opt-card[data-group="${group}"].selected`)]
+    .map(c => c.dataset.value);
+}
+
+// ── BUDGET SLIDER
+const slider = document.getElementById('budgetSlider');
+const display = document.getElementById('budgetDisplay');
+const budgetOpts = document.querySelectorAll('.budget-opt');
+
+function updateBudget(val) {
+  budgetOpts.forEach((o, i) => {
+    o.classList.toggle('active', i === +val);
+  });
+  display.innerHTML = `1인 하루 <strong>${budgetEmoji[val]} ${budgetLabels[val]}</strong>`;
+}
+
+slider.addEventListener('input', () => updateBudget(slider.value));
+budgetOpts.forEach(o => {
+  o.addEventListener('click', () => {
+    const i = +o.dataset.budgetIdx;
+    slider.value = i;
+    updateBudget(i);
+  });
+});
+
+// ── TAG INPUT
+const avoidInput = document.getElementById('avoidInput');
+if (avoidInput) {
+  avoidInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && avoidInput.value.trim()) {
+      e.preventDefault();
+      addTag(avoidInput.value.trim());
+      avoidInput.value = '';
+    }
+  });
+  document.getElementById('avoidWrap').addEventListener('click', () => avoidInput.focus());
+}
+
+function addTag(text) {
+  if (!avoidTags.includes(text)) {
+    avoidTags.push(text);
+    renderTags();
+  }
+}
+
+function removeTag(text) {
+  avoidTags = avoidTags.filter(t => t !== text);
+  renderTags();
+}
+
+function renderTags() {
+  const wrap = document.getElementById('avoidTags');
+  wrap.innerHTML = avoidTags.map(t =>
+    `<div class="tag-item" onclick="removeTag('${t}')">${t} <span>×</span></div>`
+  ).join('');
+}
+
+// ── RESULT
+function getTravelType(vibes, companion) {
+  const comp = companion[0] || '';
+  const v = vibes.join('');
+  if (v.includes('카페') || v.includes('감성')) return comp + '의 감성 카페 여행';
+  if (v.includes('자연') || v.includes('힐링')) return comp + '의 자연 힐링 여행';
+  if (v.includes('문화') || v.includes('역사')) return comp + '의 문화 탐방 여행';
+  if (v.includes('액티비티')) return comp + '의 액티비티 여행';
+  if (v.includes('맛집')) return comp + '의 미식 탐방 여행';
+  if (v.includes('휴식')) return comp + '의 느긋한 힐링 여행';
+  return comp + '의 자유 여행';
+}
+
+function escapeHTML(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[char]));
+}
+
+function collectSurveyData() {
+  const budgetIdx = +slider.value;
+  const companion = getSelected('companion');
+  const vibes = getSelected('vibe');
+
+  return {
+    f: document.getElementById('from').value || '출발지 미입력',
+    t: document.getElementById('to').value || '여행지 미입력',
+    dt: document.getElementById('travelDate').value,
+    du: document.getElementById('duration').value || '미정',
+    c: companion,
+    v: vibes,
+    b: budgetIdx,
+    tr: getSelected('transport'),
+    st: getSelected('stay'),
+    fo: getSelected('food'),
+    al: document.getElementById('allergy').value,
+    mv: document.getElementById('mustVisit').value,
+    av: avoidTags,
+    sp: getSelected('special')
+  };
+}
+
+function renderTagList(items, className = '') {
+  return `<div class="result-tags">${items.map(item =>
+    `<span class="result-tag${className ? ' ' + className : ''}">${escapeHTML(item)}</span>`
+  ).join('')}</div>`;
+}
+
+function renderResult(data) {
+  currentResultData = data;
+  const from = data.f || '출발지 미입력';
+  const to = data.t || '여행지 미입력';
+  const date = data.dt || '';
+  const duration = data.du || '미정';
+  const companion = data.c || [];
+  const vibes = data.v || [];
+  const budgetIdx = Number.isInteger(+data.b) ? +data.b : 0;
+  const budget = budgetLabels[budgetIdx] || budgetLabels[0];
+  const transport = data.tr || [];
+  const stay = data.st || [];
+  const food = data.fo || [];
+  const allergy = data.al || '';
+  const mustVisit = data.mv || '';
+  const special = data.sp || [];
+  const sharedAvoidTags = data.av || [];
+  const travelType = getTravelType(vibes, companion);
+
+  document.getElementById('resultBadge').textContent = '여행자 프로필';
+  document.getElementById('resultTitle').textContent = travelType;
+  document.getElementById('resultDesc').textContent =
+    `${to}${date ? ' · ' + date : ''} ${duration} 여행`;
+
+  const grid = document.getElementById('resultGrid');
+  grid.innerHTML = `
+    <div class="result-card">
+      <span class="rc-icon">🗺</span>
+      <div class="rc-label">여행지</div>
+      <div class="rc-value">${escapeHTML(from)} → ${escapeHTML(to)}<br><span style="font-size:12px;color:var(--ink-muted)">${escapeHTML(duration)}</span></div>
+    </div>
+    <div class="result-card">
+      <span class="rc-icon">👥</span>
+      <div class="rc-label">동행자</div>
+      <div class="rc-value">${companion.length ? escapeHTML(companion.join(', ')) : '미선택'}</div>
+    </div>
+    <div class="result-card">
+      <span class="rc-icon">💰</span>
+      <div class="rc-label">1인 하루 예산</div>
+      <div class="rc-value" style="color:var(--accent)">${budgetEmoji[budgetIdx] || budgetEmoji[0]} ${escapeHTML(budget)}</div>
+    </div>
+    <div class="result-card">
+      <span class="rc-icon">🚗</span>
+      <div class="rc-label">이동 방식</div>
+      <div class="rc-value">${transport.length ? escapeHTML(transport.join(' · ')) : '미선택'}</div>
+    </div>
+  `;
+
+  const tbody = document.getElementById('resultTableBody');
+  const rows = [
+    ['여행 분위기', vibes.length ? renderTagList(vibes) : '미선택'],
+    ['숙소 선호', stay.length ? escapeHTML(stay.join(', ')) : '미선택'],
+    ['음식 취향', food.length ? renderTagList(food, 'green') : '미선택'],
+    ['식이 제한', allergy ? escapeHTML(allergy) : '없음'],
+    ['꼭 방문', mustVisit ? escapeHTML(mustVisit) : '없음'],
+    ['피할 것', sharedAvoidTags.length ? renderTagList(sharedAvoidTags, 'blue') : '없음'],
+    ['특별 조건', special.length ? escapeHTML(special.join(', ')) : '없음'],
+  ];
+
+  tbody.innerHTML = rows.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('result').classList.add('active');
+  currentStep = TOTAL_STEPS;
+  document.getElementById('progressFill').style.width = '100%';
+  document.getElementById('progressPercent').textContent = '완료!';
+  document.getElementById('progressLabel').textContent = '여행자 리포트';
+  buildDots();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showResult() {
+  renderResult(collectSurveyData());
+}
+
+function restart() {
+  currentStep = 1;
+  currentResultData = null;
+  document.querySelectorAll('.opt-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('from').value = '';
+  document.getElementById('to').value = '';
+  document.getElementById('travelDate').value = '';
+  document.getElementById('duration').value = '';
+  document.getElementById('allergy').value = '';
+  document.getElementById('mustVisit').value = '';
+  avoidTags = [];
+  renderTags();
+  slider.value = 0;
+  updateBudget(0);
+  document.getElementById('result').classList.remove('active');
+  showStep(1);
+  updateProgress();
+}
+
+function startNewTest() {
+  history.replaceState(null, '', location.pathname + location.search);
+  restart();
+}
+
+function compactResultData(data) {
+  return Object.fromEntries(Object.entries(data).filter(([, value]) => {
+    if (Array.isArray(value)) return value.length;
+    return value !== '' && value !== null && value !== undefined;
+  }));
+}
+
+function encodeResultData(data) {
+  const json = JSON.stringify(compactResultData(data));
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+  bytes.forEach(byte => binary += String.fromCharCode(byte));
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function decodeResultData(encoded) {
+  const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - base64.length % 4) % 4);
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function getShareUrl(data) {
+  const baseUrl = location.href.split('#')[0];
+  return `${baseUrl}#result=${encodeResultData(data)}`;
+}
+
+async function shareResultLink() {
+  const data = currentResultData || collectSurveyData();
+  const url = getShareUrl(data);
+  const shareData = {
+    title: '여행 플래너 결과',
+    text: `${data.t || '여행지'} 여행 결과지를 확인해보세요.`,
+    url
+  };
+
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
+  }
+
+  navigator.clipboard.writeText(url).then(() => {
+    alert('결과 링크가 클립보드에 복사되었습니다! 🔗');
+  });
+}
+
+function copyResult() {
+  const data = currentResultData || collectSurveyData();
+  const budget = budgetLabels[+data.b] || budgetLabels[0];
+  const text = `[여행 플래너 결과]\n여행지: ${data.f || ''} → ${data.t || ''} (${data.du || ''})\n동행자: ${(data.c || []).join(', ')}\n여행 분위기: ${(data.v || []).join(', ')}\n예산: ${budget}\n꼭 방문: ${data.mv || '없음'}\n피할 것: ${(data.av || []).join(', ') || '없음'}`;
+  navigator.clipboard.writeText(text).then(() => alert('클립보드에 복사되었습니다! ✓'));
+}
+
+function restoreSharedResult() {
+  const match = location.hash.match(/^#result=([^&]+)/);
+  if (!match) return false;
+
+  try {
+    const data = decodeResultData(match[1]);
+    renderResult(data);
+    return true;
+  } catch (err) {
+    history.replaceState(null, '', location.pathname + location.search);
+    return false;
+  }
+}
+
+// INIT
+updateProgress();
+updateBudget(0);
+restoreSharedResult();
+</script>
+</body>
+</html>
